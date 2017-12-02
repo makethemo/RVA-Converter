@@ -36,73 +36,72 @@ public class RvaConverter {
 		bb.order(ByteOrder.BIG_ENDIAN);
 		int dosSignature = bb.getChar();
 
-		if (dosSignature == DOS_HEADER_SIGNATURE) {
-			bb.order(ByteOrder.nativeOrder());
-			bb.position(ADDR_E_LFANEW);
-			int addrNtHeader = bb.getInt();
+		if (dosSignature != DOS_HEADER_SIGNATURE) {
+			System.out.println("This file's header is not PE format...");
+			return;
+		}
 
-			bb.order(ByteOrder.BIG_ENDIAN);
-			bb.position(addrNtHeader);
-			int ntSignature = bb.getInt();
+		bb.order(ByteOrder.nativeOrder());
+		bb.position(ADDR_E_LFANEW);
+		int addrNtHeader = bb.getInt();
 
-			if (ntSignature == NT_HEADER_SIGNATURE) {
-				System.out.println("PE Header!!!");
+		bb.order(ByteOrder.BIG_ENDIAN);
+		bb.position(addrNtHeader);
+		int ntSignature = bb.getInt();
 
-				bb.order(ByteOrder.nativeOrder());
-				int machine = bb.getChar();
-				System.out.println(Integer.toHexString(machine));
+		if (ntSignature != NT_HEADER_SIGNATURE) {
+			System.out.println("PE Header is not founded...");
+			return;
+		}
 
-				int numberOfSections = bb.getChar();
-				System.out.println("The number of sections: " + String.valueOf(numberOfSections));
+		System.out.println("PE Header!!!");
 
-				bb.position(bb.position() + 12);
-				int sizeOfOptionalHeader = bb.getChar();
-				System.out.println("Size of optional header: " + String.valueOf(sizeOfOptionalHeader));
+		bb.order(ByteOrder.nativeOrder());
+		int machine = bb.getChar();
+		System.out.println(Integer.toHexString(machine));
 
-				int startingPointOfOptionalHeader = bb.position() + 2;
+		int numberOfSections = bb.getChar();
+		System.out.println("The number of sections: " + String.valueOf(numberOfSections));
 
-				bb.position(startingPointOfOptionalHeader);
-				int optionalHeaderSignature = bb.getChar();
+		bb.position(bb.position() + 12);
+		int sizeOfOptionalHeader = bb.getChar();
+		System.out.println("Size of optional header: " + String.valueOf(sizeOfOptionalHeader));
 
-				long imageBase;
+		int startingPointOfOptionalHeader = bb.position() + 2;
 
-				if (optionalHeaderSignature == IMAGE_OPTIONAL_HEADER32) {
-					bb.position(bb.position() + 26);
-					imageBase = bb.getInt();
+		bb.position(startingPointOfOptionalHeader);
+		int optionalHeaderSignature = bb.getChar();
 
-				} else if (optionalHeaderSignature == IMAGE_OPTIONAL_HEADER64) {
-					bb.position(bb.position() + 22);
-					imageBase = bb.getLong();
+		long imageBase;
 
-				} else {
-					System.out.println("Unknown optional header...");
-					return;
-				}
+		if (optionalHeaderSignature == IMAGE_OPTIONAL_HEADER32) {
+			bb.position(bb.position() + 26);
+			imageBase = bb.getInt();
 
-				System.out.println(Long.toHexString(imageBase));
-
-				int startingPointOfSectionHeader = startingPointOfOptionalHeader + sizeOfOptionalHeader;
-
-				StringBuilder sb = new StringBuilder(8);
-				byte oneByteChar = 1;
-
-				for (int i = 0; i < numberOfSections; i++) {
-					bb.position(startingPointOfSectionHeader + SIZE_OF_SECTION_HEADER * i);
-					while ((oneByteChar = bb.get()) != '\0') {
-						sb.append((char) oneByteChar);
-					}
-					System.out.println(sb.toString());
-					sb.setLength(0);
-					oneByteChar = 1;
-				}
-
-			} else {
-				System.out.println("PE Header is not founded...");
-				return;
-			}
+		} else if (optionalHeaderSignature == IMAGE_OPTIONAL_HEADER64) {
+			bb.position(bb.position() + 22);
+			imageBase = bb.getLong();
 
 		} else {
-			System.out.println("This file's header is not PE format...");
+			System.out.println("Unknown optional header...");
+			return;
+		}
+
+		System.out.println(Long.toHexString(imageBase));
+
+		int startingPointOfSectionHeader = startingPointOfOptionalHeader + sizeOfOptionalHeader;
+
+		StringBuilder sb = new StringBuilder(8);
+		byte oneByteChar = 1;
+
+		for (int i = 0; i < numberOfSections; i++) {
+			bb.position(startingPointOfSectionHeader + SIZE_OF_SECTION_HEADER * i);
+			while ((oneByteChar = bb.get()) != '\0') {
+				sb.append((char) oneByteChar);
+			}
+			System.out.println(sb.toString());
+			sb.setLength(0);
+			oneByteChar = 1;
 		}
 	}
 
