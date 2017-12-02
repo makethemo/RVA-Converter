@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.makethemo.reversing.rvaconverter.header.SectionHeader;
+
 public class RvaConverter {
 
 	private static final String TYPE_RAW_TO_RVA = "raw";
@@ -26,7 +28,15 @@ public class RvaConverter {
 
 	private static final int ADDR_E_LFANEW = 0x3c;
 
+	private String filePath;
+	private String type;
+	private long offset;
+
 	public static void main(String[] args) throws IOException {
+		String filePath = args[0];
+		String type = args[1];
+		long offset = Long.parseLong(args[2], 16);
+
 		System.out.println(args[0]);
 		BufferedInputStream in = new BufferedInputStream(new FileInputStream(args[0]));
 		byte[] buf = new byte[1024];
@@ -91,18 +101,58 @@ public class RvaConverter {
 
 		int startingPointOfSectionHeader = startingPointOfOptionalHeader + sizeOfOptionalHeader;
 
+		SectionHeader[] sectionHeaders = new SectionHeader[numberOfSections];
 		StringBuilder sb = new StringBuilder(8);
 		byte oneByteChar = 1;
 
+		long virtualAddress = 0;
+		long pointerToRawData = 0;
+
 		for (int i = 0; i < numberOfSections; i++) {
-			bb.position(startingPointOfSectionHeader + SIZE_OF_SECTION_HEADER * i);
+			int startingPoint = startingPointOfSectionHeader + SIZE_OF_SECTION_HEADER * i;
+			bb.position(startingPoint);
+
 			while ((oneByteChar = bb.get()) != '\0') {
 				sb.append((char) oneByteChar);
 			}
-			System.out.println(sb.toString());
+			String name = sb.toString();
+			System.out.println(name);
 			sb.setLength(0);
 			oneByteChar = 1;
+
+			bb.position(startingPoint + 12);
+			virtualAddress = bb.getInt();
+
+			bb.position(startingPoint + 0x14);
+			pointerToRawData = bb.getInt();
+
+			sectionHeaders[i] = new SectionHeader(name, virtualAddress, pointerToRawData);
 		}
+
+		if (!type.equalsIgnoreCase(TYPE_RVA_TO_RAW)) {
+			System.out.println("RAW to RVA is not implemented...");
+			return;
+		}
+
+		if (offset > imageBase) {
+			offset -= imageBase;
+		}
+
+		for (int i = numberOfSections - 1; i >= 0; i--) {
+
+			if (offset < sectionHeaders[i].getVirtualAddress()) {
+				continue;
+			}
+
+			virtualAddress = sectionHeaders[i].getVirtualAddress();
+			pointerToRawData = sectionHeaders[i].getPointerToRawData();
+			break;
+		}
+
+		System.out.println("Raw offset is " + Long.toHexString(rvaToRaw(offset, virtualAddress, pointerToRawData)));
 	}
 
+	public static long rvaToRaw(long rva, long virtualAddress, long pointerToRawData) {
+		return rva - virtualAddress + pointerToRawData;
+	}
 }
