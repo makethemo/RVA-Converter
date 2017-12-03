@@ -47,7 +47,7 @@ public class RvaConverter {
 		int dosSignature = bb.getChar();
 
 		if (dosSignature != DOS_HEADER_SIGNATURE) {
-			System.out.println("This file's header is not PE format...");
+			System.out.println("This file is not a PE format...");
 			return;
 		}
 
