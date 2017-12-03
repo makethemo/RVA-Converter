@@ -16,8 +16,8 @@ public class RvaConverter {
 		String type = args[1];
 		long offset = Long.parseLong(args[2], 16);
 
-		if (!type.equalsIgnoreCase(TYPE_RVA_TO_RAW)) {
-			System.out.println("RAW to RVA is not implemented...");
+		if (!(type.equalsIgnoreCase(TYPE_RVA_TO_RAW) || type.equalsIgnoreCase(TYPE_RAW_TO_RVA))) {
+			System.out.println("Second argument must be 'raw' or 'rva'...");
 			return;
 		}
 
@@ -28,29 +28,49 @@ public class RvaConverter {
 
 		List<SectionHeader> list = pe.getSectionHeaders();
 
-		if (offset > imageBase) {
+		if (type.equalsIgnoreCase(TYPE_RVA_TO_RAW) && offset > imageBase) {
 			offset -= imageBase;
 		}
 
 		long virtualAddress = 0;
 		long pointerToRawData = 0;
 
-		for (int i = list.size() - 1; i >= 0; i--) {
+		if (type.equalsIgnoreCase(TYPE_RVA_TO_RAW)) {
 
-			if (offset < list.get(i).getVirtualAddress()) {
-				continue;
+			for (int i = list.size() - 1; i >= 0; i--) {
+
+				if (offset < list.get(i).getVirtualAddress()) {
+					continue;
+				}
+
+				virtualAddress = list.get(i).getVirtualAddress();
+				pointerToRawData = list.get(i).getPointerToRawData();
+				break;
 			}
+			System.out.println("Raw offset is " + Long.toHexString(rvaToRaw(offset, virtualAddress, pointerToRawData)));
+		} else {
 
-			virtualAddress = list.get(i).getVirtualAddress();
-			pointerToRawData = list.get(i).getPointerToRawData();
-			break;
+			for (int i = list.size() - 1; i >= 0; i--) {
+
+				if (offset < list.get(i).getPointerToRawData()) {
+					continue;
+				}
+
+				virtualAddress = list.get(i).getVirtualAddress();
+				pointerToRawData = list.get(i).getPointerToRawData();
+				break;
+			}
+			System.out.println("RVA is " + Long.toHexString(rawToRva(offset, virtualAddress, pointerToRawData)));
 		}
 
-		System.out.println("Raw offset is " + Long.toHexString(rvaToRaw(offset, virtualAddress, pointerToRawData)));
 		pe.close();
 	}
 
 	public static long rvaToRaw(long rva, long virtualAddress, long pointerToRawData) {
 		return rva - virtualAddress + pointerToRawData;
+	}
+
+	public static long rawToRva(long raw, long virtualAddress, long pointerToRawData) {
+		return raw - pointerToRawData + virtualAddress;
 	}
 }
