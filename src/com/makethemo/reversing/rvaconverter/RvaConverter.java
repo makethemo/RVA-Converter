@@ -33,14 +33,17 @@ public class RvaConverter {
 		String lineSeparator = System.lineSeparator();
 		StringBuilder builder = new StringBuilder();
 		builder.append(filePath).append(lineSeparator).append(lineSeparator);
-		
+
 		builder.append("Machine:\t\t 0x").append(Integer.toHexString(fileHeader.getMachine())).append(lineSeparator);
 		builder.append("The number of sections:\t ").append(list.size()).append(lineSeparator);
 		builder.append("Imagebase:\t\t 0x").append(Long.toHexString(imageBase)).append(lineSeparator);
-		
+
 		builder.append(lineSeparator).append("<Sections>").append(lineSeparator);
 		for (SectionHeader header : list) {
-			builder.append(header.getName()).append(lineSeparator);
+			builder.append(header.getName()).append('\t');
+			builder.append("0x").append(Long.toHexString(header.getVirtualAddress())).append('\t');
+			builder.append("0x").append(Long.toHexString(header.getPointerToRawData()));
+			builder.append(lineSeparator);
 		}
 		builder.append(lineSeparator);
 
