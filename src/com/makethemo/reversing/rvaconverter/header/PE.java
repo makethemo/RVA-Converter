@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PE {
-	
+
 	public static final int DOS_HEADER_SIGNATURE = 0x4d5a;
 	public static final int NT_HEADER_SIGNATURE = 0x50450000;
 
@@ -28,7 +28,7 @@ public class PE {
 	private BufferedInputStream in;
 	private byte[] buf;
 	private ByteBuffer bb;
-	
+
 	private volatile ImageNtHeaders ntHeaders;
 	private volatile List<SectionHeader> sectionHeaders;
 
@@ -64,23 +64,23 @@ public class PE {
 			throw new IOException("This file is not a PE format...");
 		}
 	}
-	
+
 	public ImageNtHeaders getNtHeaders() throws IOException {
 		if (ntHeaders == null) {
 			ntHeaders = new ImageNtHeaders(bb);
 		}
 		return ntHeaders;
 	}
-	
+
 	public List<SectionHeader> getSectionHeaders() throws IOException {
 		if (sectionHeaders == null) {
 			ImageFileHeader fileHeader = getNtHeaders().getFileHeader();
 			int startingPointOfOptionalHeader = fileHeader.getStartingPointOfOptionalHeader();
 			int sizeOfOptionalHeader = fileHeader.getSizeOfOptionalHeader();
-			
+
 			int startingPointOfSectionHeader = startingPointOfOptionalHeader + sizeOfOptionalHeader;
 			int numberOfSections = fileHeader.getNumberOfSections();
-			
+
 			SectionHeader[] sectionHeaders = new SectionHeader[numberOfSections];
 			StringBuilder sb = new StringBuilder(8);
 			byte oneByteChar = 1;
@@ -96,7 +96,6 @@ public class PE {
 					sb.append((char) oneByteChar);
 				}
 				String name = sb.toString();
-				System.out.println(name);
 				sb.setLength(0);
 				oneByteChar = 1;
 
@@ -108,12 +107,12 @@ public class PE {
 
 				sectionHeaders[i] = new SectionHeader(name, virtualAddress, pointerToRawData);
 			}
-			
+
 			this.sectionHeaders = Arrays.asList(sectionHeaders);
 		}
 		return sectionHeaders;
 	}
-	
+
 	public void close() {
 		try {
 			in.close();

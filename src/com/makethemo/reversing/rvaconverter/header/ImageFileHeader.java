@@ -14,14 +14,10 @@ public class ImageFileHeader {
 		bb.position(startingPointOfFileHeader);
 		bb.order(ByteOrder.nativeOrder());
 		machine = bb.getChar();
-		System.out.println(Integer.toHexString(machine));
-
 		numberOfSections = bb.getChar();
-		System.out.println("The number of sections: " + String.valueOf(numberOfSections));
 
 		bb.position(bb.position() + 12);
 		sizeOfOptionalHeader = bb.getChar();
-		System.out.println("Size of optional header: " + String.valueOf(sizeOfOptionalHeader));
 
 		startingPointOfOptionalHeader = bb.position() + 2;
 	}

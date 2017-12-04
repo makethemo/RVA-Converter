@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class ImageOptionalHeader {
-	
+
 	private final long imageBase;
 
 	public ImageOptionalHeader(ByteBuffer bb, int startingPointOfOptionalHeader) throws IOException {
@@ -22,8 +22,6 @@ public class ImageOptionalHeader {
 		} else {
 			throw new IOException("Unknown optional header...");
 		}
-
-		System.out.println(Long.toHexString(imageBase));
 	}
 
 	public long getImageBase() {
